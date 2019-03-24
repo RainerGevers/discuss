@@ -1546,10 +1546,12 @@ socket.connect();
 var createSocket = function createSocket(topicId) {
   var channel = socket.channel("comments:" + topicId, {});
   channel.join().receive("ok", function (resp) {
-    console.log("Joined successfully", resp);
+    renderComments(resp.comments);
   }).receive("error", function (resp) {
     console.log("Unable to join", resp);
   });
+
+  channel.on("comments:" + topicId + ":new", renderComment);
 
   document.querySelector('button').addEventListener('click', function () {
     var content = document.querySelector('textarea').value;
@@ -1557,6 +1559,25 @@ var createSocket = function createSocket(topicId) {
     channel.push('comment:add', { content: content });
   });
 };
+
+function renderComments(comments) {
+  var renderedComments = comments.map(function (comment) {
+    return commentTemplate(comment);
+  });
+
+  document.querySelector('.collection').innerHTML = renderedComments.join('');
+}
+
+function renderComment(event) {
+  console.log(event.comment);
+  var renderedComment = commentTemplate(event.comment);
+
+  document.querySelector('.collection').innerHTML += renderedComment;
+}
+
+function commentTemplate(comment) {
+  return "\n    <li class=\"collection-item\">\n      " + comment.content + "\n    </li>\n  ";
+}
 
 window.createSocket = createSocket;
 
